@@ -1,0 +1,159 @@
+---
+title: "ML Braille Character Dataset"
+author: "Abhinav Bisht"
+date: "16/11/2021"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tensorflow)
+library(keras)
+#install_keras()
+```
+
+# About Dataset
+
+This dataset available on [Kaggle]("https://www.kaggle.com/shanks0465/braille-character-dataset") includes Braille script letter scans. The dataset is light (about 1 MB), it contains scans of the 26 characters of English in Braille script with augmentations as noted:
+
+- dim (brightness)
+- rot (rotation)
+- whs (width height shift)
+
+These augmentations had 20 variations each (with different intensities) for each alphabet in English language, in 28x28 pixels, jpeg format.
+Thus, the total dataset included: 
+
+<center>
+
+**3 (augmentation) x 20 (augmentation intensity) x 26 (charecters) = 1,560 images**
+
+</center>
+
+This dataset was carefully picked for having 1000+ images and no R-code on kaggle available at the time of making the selection. Which makes it a perfect exercise for ML on portable computers.
+
+<center>
+```
+![Kaggle website screenshot showing only available codes (in Python)](screenshots/1.jpg)
+
+[Kaggle website screenshot showing no available codes for R](screenshots/2.jpg)
+```
+</center>
+
+
+**Link to the [dataset page.]('https://www.kaggle.com/shanks0465/braille-character-dataset')**
+
+
+# Discussion and application
+
+Today there are over 253 million visually impaired persons in the world, out of which 36 million are accounted for as completely blind persons. With the world moving towards AI and IoT, incorporating machine learning for various scripts/languages to decipher messages is not just a need for aiding specially abled but also a need for securirty tomorrow. Employing CNN for reading brail script in this assignment has proved to be effective. 
+In future a similar machine learning alorithm can also be used to create programs for various applications, such as hand-writing recognition, deciphering ancient scripts, understanding damaged documents, intelligence generation, etc. 
+
+# Objective 1: Importing images and splitting test-train-validation sets
+
+```{r import}
+original_dataset_dir <- "Braille Dataset/Braille Dataset" # we will only use the labelled data
+base_dir <- "Braille_learn" # to store a sebset of data that we are going to use
+
+ls <- c("dim", "rot", "whs")
+dir.create(base_dir)
+train_dir <- file.path(base_dir, "train")
+dir.create(train_dir)
+validation_dir <- file.path(base_dir, "validation")
+dir.create(validation_dir)
+
+
+
+for (chr in letters[1:26]){
+  current_train <- file.path(train_dir, chr)
+  current_valid <- file.path(validation_dir, chr)
+  dir.create(current_train)
+  dir.create(current_valid)
+}
+
+for (word in ls){
+  for (i in 0:14){
+    for (chr in letters[1:26]){
+      fnames <- paste0(chr,"1.JPG",i, word,".jpg")
+      file.copy(file.path(original_dataset_dir, fnames), file.path(train_dir, chr))
+    }
+  }
+}
+
+for (word in ls){
+  for (i in 15:19){
+    for (chr in letters[1:26]){
+      fnames <- paste0(chr,"1.JPG",i, word,".jpg")
+      file.copy(file.path(original_dataset_dir, fnames), file.path(validation_dir, chr))
+    }
+  }
+}
+
+
+```
+
+## Objective 2: Train model (Keras - CNN)
+
+
+```{r CNN, echo=TRUE}
+model_v2 <- keras_model_sequential() %>%
+  layer_conv_2d(filters = 32, kernel_size = c(3, 3), activation = "relu",
+                input_shape = c(150, 150, 3)) %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu") %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3), activation = "relu") %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3), activation = "relu") %>%
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_flatten() %>%
+  layer_dense(units = 512, activation = "relu") %>%
+  layer_dense(units = 1, activation = "sigmoid")
+    
+
+model_v2 %>%  compile(loss = "binary_crossentropy",
+                      optimizer = optimizer_rmsprop(),
+                      metrics = c("acc")
+                      )
+
+
+train_datagen <- image_data_generator(rescale = 1/255)
+validation_datagen <- image_data_generator(rescale = 1/255)
+
+
+train_generator <- flow_images_from_directory(
+  train_dir,                  # Target directory
+  train_datagen,              # Training data generator
+  target_size = c(150, 150),  # Resizes all images to 150 × 150
+  batch_size = 26,            # 20 samples in one batch
+  class_mode = "categorical"       # Because we use binary_crossentropy loss,
+  # we need binary labels.
+)
+
+
+validation_generator <- flow_images_from_directory(
+  validation_dir,
+  validation_datagen,
+  target_size = c(150, 150),
+  batch_size = 26,
+  class_mode = "categorical"
+)
+
+history_v2 <- model_v2 %>%
+  fit(train_generator,
+      steps_per_epoch = 26,
+      epochs = 45,
+      validation_data = validation_generator,
+      validation_steps = 15
+      ) 
+
+```
+
+# Objective 3: Plot relevant graphs
+
+```{r plot}
+plot(history_v2)
+```
+
+Please note that the `echo = TRUE` parameter was added to the code chunk to print R code that generated the plot and rest of the functions. 
+Student email ID: abisht1@student.gsu.edu
