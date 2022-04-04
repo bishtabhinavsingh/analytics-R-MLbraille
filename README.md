@@ -1,7 +1,7 @@
 
 # About Dataset
 
-This dataset available on ![Kaggle]("https://www.kaggle.com/shanks0465/braille-character-dataset") includes Braille script letter scans. The dataset is light (about 1 MB), it contains scans of the 26 characters of English in Braille script with augmentations as noted:
+This dataset available on [Kaggle](https://www.kaggle.com/shanks0465/braille-character-dataset) includes Braille script letter scans. The dataset is light (about 1 MB), it contains scans of the 26 characters of English in Braille script with augmentations as noted:
 
 - dim (brightness)
 - rot (rotation)
@@ -18,12 +18,7 @@ Thus, the total dataset included:
 This dataset was carefully picked for having 1000+ images and no R-code on kaggle available at the time of making the selection. Which makes it a perfect exercise for ML on portable computers.
 
 
-
-  
-
-
-
-Link to the ![dataset page.]('https://www.kaggle.com/shanks0465/braille-character-dataset')
+Link to the [dataset page](https://www.kaggle.com/shanks0465/braille-character-dataset)
 
 
 # Discussion and application
